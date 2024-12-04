@@ -7,32 +7,32 @@
 def search_direction(letters:list[list[str]], start_x:int, start_y:int, dir:int, match_len:int, match_str:str) -> (bool, (int, int)):
     match dir:
         case 1:
-            next = [(-1, -1), (-2, -2), (-3, -3)]
+            next = (-1, -1)
         case 2:
-            next = [(0, -1), (0, -2), (0, -3)]
+            next = (0, -1)
         case 3:
-            next = [(1, -1), (2, -2), (3, -3)]
+            next = (1, -1)
         case 4:
-            next = [(1, 0), (2, 0), (3, 0)]
+            next = (1, 0)
         case 5:
-            next = [(1, 1), (2, 2), (3, 3)]
+            next = (1, 1)
         case 6:
-            next = [(0, 1), (0, 2), (0, 3)]
+            next = (0, 1)
         case 7:
-            next = [(-1, 1), (-2, 2), (-3, 3)]
+            next = (-1, 1)
         case 8:
-            next = [(-1, 0), (-2, 0), (-3, 0)]
+            next = (-1, 0)
 
-    max_x = start_x + next[match_len-1][0]
-    max_y = start_y + next[match_len-1][1]
+    max_x = start_x + next[0]*match_len
+    max_y = start_y + next[1]*match_len
 
     if max_y < 0 or max_x < 0 or max_y >= len(letters) or max_x >= len(letters[start_y]):
         return False, (0, 0)
     
 
-    val = match_str == ''.join([letters[start_y + next[i][1]][start_x + next[i][0]] for i in range(match_len)])
+    val = match_str == ''.join([letters[start_y + (i+1)*next[1]][start_x + (i+1)*next[0]] for i in range(match_len)])
 
-    return val, (start_x + next[match_len-2][0], start_y + next[match_len-2][1])
+    return val, (start_x + (match_len-1)*next[0], start_y + (match_len-1)*next[1])
 
 def main_part1(word_search: list[list[str]]):
     count = 0
