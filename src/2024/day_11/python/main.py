@@ -13,40 +13,30 @@ def blink(stone:int) -> list[int]:
         new_order.append(stone * 2024)
     return new_order
 
-def recursive_blink(stone:int, blinks:int) -> list[int]:
-    for b in range(blinks,0, -1):
-        if (stone, b) in calculated_results:
-            new_stones = calculated_results[(stone, b)]
-            if b == blinks:
-                return new_stones
-            n_stones = [s for new_stone in new_stones for s in recursive_blink(new_stone, blinks-b)]
-            calculated_results[(stone, blinks)] = n_stones
-            return n_stones
-    
-    new_stones = blink(stone)
-    calculated_results[(stone, 1)] = new_stones
-    
-    if blinks == 1:
-        return new_stones
-    new_stones = [s for new_stone in new_stones for s in recursive_blink(new_stone, blinks-1)]
-    calculated_results[stone, blinks] = new_stones
-    return new_stones
-
-def blink_with_cache(stones:list[int], number_of_blinks:int) -> list[int]:
-    new_stones = []
+def blink_count(stones:list[int], number_of_blinks:int):
+    stone_map = {}
     for stone in stones:
-        new_stones.extend(recursive_blink(stone, number_of_blinks))
-    return new_stones
-
+        if stone not in stone_map:
+            stone_map[stone] = 0
+        stone_map[stone] += 1
+    for _ in range(number_of_blinks):
+        new_map = {}
+        for key, count in stone_map.items():
+            new_stones = blink(key)
+            for stone in new_stones:
+                if stone not in new_map:
+                    new_map[stone] = 0
+                new_map[stone] += count
+        stone_map = new_map
+    
+    print(f'There are {sum(stone_map.values())} stones now')
 
 def main(stones:list[int]):
-    #print(f'Original Arrangement:\n{stones}')
-    number_of_blinks = 25
-    s_time = datetime.now()
-    new_stones = blink_with_cache(stones, number_of_blinks)
-    print(datetime.now() - s_time)
+    number_of_blinks = 75
 
-    print(f'Now a total of {len(new_stones)} stones')
+    s_time = datetime.now()
+    blink_count(stones, number_of_blinks)
+    print(datetime.now() - s_time)
 
 if __name__ == "__main__":
     with open("../inputs.txt") as file:
