@@ -44,55 +44,47 @@ class WeightedGraph(SquareGrid):
 def search(graph: WeightedGraph, start:GridLocation, end:GridLocation) -> tuple[list[int], dict[Location, Optional[Location]]]:
     path = PriorityQueue()
     path.put((0, start))
-    came_from: dict[Location, list[(Location, tuple[int, int])]] = {}
-    cost_so_far: dict[Location, int] = {}
+    came_from: dict[Location, list[(Location, tuple[int, int]), int]] = {}
 
-    came_from[start] = [(GridLocation((start[0], start[1]-1)), (0, 1))]
-    cost_so_far[start] = 0
-    end_costs:list[int] = []
+    came_from[start] = [(GridLocation((start[0], start[1]-1)), (0, 1), 0)]
 
     while not path.empty():
         current:Location = path.get()[1]
-        #print('current', current)
         if current == end:
-            end_costs.append(cost_so_far[current])
             break
 
         for next_point in graph.neighbors(current):
-            #if current == (92,133):
-            #    print('here i am', came_from[current])
-            for unique_path in came_from[current]:
-                
-                prev_dir = unique_path[1]
-                new_dir = (next_point[0] - current[0], next_point[1] - current[1])
-                inc_cost = graph.cost(current, next_point, prev_dir)
-                new_cost = cost_so_far[current] + inc_cost
-                if current == (92, 133) or current == (91, 132):
-                    print('!!!',current, cost_so_far.get(current, None), next_point, inc_cost, cost_so_far.get(next_point, None))
-                    print('!!',cost_so_far.get(next_point, 0) == new_cost, new_cost - cost_so_far.get(next_point, 0) == 1000, inc_cost == 1)
-                
-                if next_point not in cost_so_far or cost_so_far[next_point] > new_cost:
+            new_dir = (next_point[0] - current[0], next_point[1] - current[1])
 
-                    if next_point in cost_so_far and cost_so_far[next_point] - new_cost == 1000 and not graph.passable((next_point[0] + new_dir[0], next_point[1]+new_dir[1])):
-                        came_from[next_point].append([current, new_dir])
+            for unique_path in came_from[current]:
+                prev_dir = unique_path[1]
+                
+                if new_dir != prev_dir and len(unique_path) == 4 and not unique_path[3]:
+                    continue
+
+                inc_cost = graph.cost(current, next_point, prev_dir)
+                new_cost = unique_path[2] + inc_cost
+                if next_point in came_from:
+                    min_path_cost = min([path[2] for path in came_from.get(next_point)])
+                else:
+                    min_path_cost = 1e9
+
+                if next_point not in came_from or min_path_cost > new_cost:
+
+                    if next_point in came_from and min_path_cost - new_cost == 1000 and not graph.passable((next_point[0] + new_dir[0], next_point[1]+new_dir[1])):
+                        came_from[next_point].append((current, new_dir, new_cost))
                     else:
-                        cost_so_far[next_point] = new_cost
                         priority = new_cost
                         path.put((priority, next_point))
-                        came_from[next_point] = [(current, new_dir)]
-                elif cost_so_far[next_point] == new_cost or (new_cost - cost_so_far[next_point] == 1000 and inc_cost == 1):
-                    if current == (92, 133) or current == (91, 132):
-                        print('here')
-                    straight_passable = False
-                    for cf in came_from[next_point]:
-                        old_dir = cf[1]
-                        if graph.passable((next_point[0] + old_dir[0], next_point[1] + old_dir[1])):
-                            if current == (92, 133) or current == (91, 132):
-                                print('straight passable:',next_point[0] + old_dir[0], next_point[1] + old_dir[1])
-                            straight_passable = True
-                            break
-                    if straight_passable:
-                        continue
-                    came_from[next_point].append([current, new_dir])
-    
-    return end_costs, came_from
+                        came_from[next_point] = [(current, new_dir, new_cost)]
+                elif min_path_cost == new_cost or (new_cost - min_path_cost == 1000 and inc_cost == 1):
+                    next_next_point = (next_point[0]+new_dir[0], next_point[1]+new_dir[1])
+                    if graph.passable(next_next_point) and next_next_point in came_from and min([path[2] for path in came_from.get(next_next_point)]) > new_cost:
+                        came_from[next_point].append((current, new_dir,new_cost, True))
+                    next_next_point = (next_point[0]+new_dir[1], next_point[1]+new_dir[0])
+                    if graph.passable(next_next_point) and next_next_point in came_from and min([path[2] for path in came_from.get(next_next_point)]) > new_cost:
+                        came_from[next_point].append((current, new_dir,new_cost, False))
+                    next_next_point = (next_point[0]-new_dir[1], next_point[1]-new_dir[0])
+                    if graph.passable(next_next_point) and next_next_point in came_from and min([path[2] for path in came_from.get(next_next_point)]) > new_cost:
+                        came_from[next_point].append((current, new_dir,new_cost, False))
+    return came_from
