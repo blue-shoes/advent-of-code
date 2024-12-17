@@ -25,7 +25,6 @@ def bxc(operand:int):
     register_b = register_b ^ register_c
 
 def out(operand:int):
-    global output
     output.append(get_combo_operand(operand) % 8)
 
 def bdv(operand:int):
@@ -89,10 +88,35 @@ def main_part1(mult_string:list[str]):
         OpCode.get_enum(instructions[i_pointer])(operand)
         i_pointer += 2
 
-    print(','.join([str(i) for i in output]))
+    print(f"Debug output is: {','.join([str(i) for i in output])}")
+
+def main_part2(mult_string:list[str]):
+    #This is an input-specific solution
+    global output, i_pointer, register_a, register_b, register_c
+    regex = '(\\d+)'
+    compiled = re.compile(regex)
+    instructions = [int(i) for i in compiled.findall(mult_string[-1])]
+
+    register_a = 0
+
+    for i in range(len(instructions)):
+        orig_register_a = register_a * 8
+        target = instructions[-(i+1)]
+        for b in range(8):
+            register_a = orig_register_a + b
+            if register_a == 0:
+                continue
+            register_b = b ^ 3
+            register_c = register_a // (2**register_b)
+            register_b = (register_b ^ 4) ^ register_c
+            if register_b % 8 == target:
+                break
+    
+    print(f'Initial value to recreate program is: {register_a}')
 
 if __name__ == "__main__":
     with open("../inputs.txt") as file:
         mult_string = [line.strip() for line in file.readlines()]
     
     main_part1(mult_string)
+    main_part2(mult_string)
