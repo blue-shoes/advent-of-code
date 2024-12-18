@@ -21,11 +21,7 @@ def main_part2(coords:list[tuple[int,int]], grid_size:tuple[int,int], fallen_byt
             break
     
     blocker = coords[mid-1]
-    print(mid-1)
     print(f'First byte that will block the exit is {blocker[1], blocker[0]}')
-
-
-    
 
 def main_part1(coords:list[tuple[int,int]], grid_size:tuple[int,int], fallen_bytes:int):
     graph = dijkstra.SquareGrid(grid_size[0], grid_size[1])
