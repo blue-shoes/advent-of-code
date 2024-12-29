@@ -28,8 +28,7 @@ def get_move(start:str, end:str) -> tuple[int, int]:
     end_coord = Button.get_enum(end).value[1]
     return end_coord[0] - start_coord[0], end_coord[1] - start_coord[1]
 
-def get_pattern(code:str, bot_num:int) -> str:
-    start_pos = 'A'
+def get_pattern(code:str, bot_num:int, start_pos:str = 'A') -> str:
     move_str = ''
     for s in list(code):
         move = get_move(start_pos, s)
@@ -106,38 +105,70 @@ def get_pattern(code:str, bot_num:int) -> str:
 
         move_str += 'A'
         start_pos = s
-    if bot_num < 3:
-        #print(move_str)
+    if bot_num < 3 and bot_num != -1:
         return get_pattern(move_str, bot_num+1)
     return move_str
 
-def test():
-    p1 = '<^A'
-    print(f'{p1}, {len(get_pattern(p1, 2))}')
-    p2 = '^<A'
-    print(f'{p2}, {len(get_pattern(p2, 2))}')
-    p3 = '<vA'
-    print(f'{p3}, {len(get_pattern(p3, 2))}')
-    p4 = 'v<A'
-    print(f'{p4}, {len(get_pattern(p4, 2))}')
-    p5 = '>^A'
-    print(f'{p5}, {len(get_pattern(p5, 2))}')
-    p6 = '^>A'
-    print(f'{p6}, {len(get_pattern(p6, 2))}')
-    p7 = '>vA'
-    print(f'{p7}, {len(get_pattern(p7, 2))}')
-    p8 = 'v>A'
-    print(f'{p8}, {len(get_pattern(p8, 2))}')
+def map_moves() -> dict[tuple[Button, Button], str]:
+    possible_moves = [
+        (Button.A.value[0], Button.LEFT.value[0]),
+        (Button.A.value[0], Button.RIGHT.value[0]),
+        (Button.A.value[0], Button.UP.value[0]),
+        (Button.A.value[0], Button.DOWN.value[0]),
+        (Button.A.value[0], Button.A.value[0]),
+        (Button.LEFT.value[0], Button.LEFT.value[0]),
+        (Button.LEFT.value[0], Button.UP.value[0]),
+        (Button.LEFT.value[0], Button.DOWN.value[0]),
+        (Button.LEFT.value[0], Button.A.value[0]),
+        (Button.UP.value[0], Button.LEFT.value[0]),
+        (Button.UP.value[0], Button.RIGHT.value[0]),
+        (Button.UP.value[0], Button.UP.value[0]),
+        (Button.UP.value[0], Button.A.value[0]),
+        (Button.DOWN.value[0], Button.LEFT.value[0]),
+        (Button.DOWN.value[0], Button.RIGHT.value[0]),
+        (Button.DOWN.value[0], Button.DOWN.value[0]),
+        (Button.DOWN.value[0], Button.A.value[0]),
+        (Button.RIGHT.value[0], Button.RIGHT.value[0]),
+        (Button.RIGHT.value[0], Button.UP.value[0]),
+        (Button.RIGHT.value[0], Button.DOWN.value[0]),
+        (Button.RIGHT.value[0], Button.A.value[0])
+    ]
+    move_map = {}
+    for move in possible_moves:
+        move_map[''.join(move)] = get_pattern(move[1], -1, move[0])
+    
+    return move_map
+
+def main_part2(codes:list[str], robots:int):
+    move_map = map_moves()
+    c_sum = 0
+    for code in codes:
+        val = int(code[:-1])
+        init_pattern = 'A' + get_pattern(code, -1)
+        pattern_count = {key:0 for key in move_map.keys()}
+        for idx in range(len(init_pattern)-1):
+            pattern_count[init_pattern[idx:idx+2]] += 1
+        for _ in range(robots):
+            tmp_count = {key:0 for key in pattern_count.keys()}
+
+            for move_pair, num in pattern_count.items():
+                if num == 0:
+                    continue
+                new_pattern = 'A' + move_map.get(move_pair)
+                for idx in range(len(new_pattern)-1):
+                    tmp_count[new_pattern[idx:idx+2]] += num
+            pattern_count = tmp_count
+        
+        c_sum += sum([v for v in pattern_count.values()])*val
+    
+    print(f'The Complexity sum is {c_sum}')
+
 
 def main_part1(codes:list[str]):
     c_sum = 0
     for code in codes:
         val = int(code[:-1])
-        #if val != 179:
-        #    continue
         move = get_pattern(code, 1)
-        #print(move)
-        print(len(move))
         c_sum += len(move) * val
     
     print(f'The Complexity sum is {c_sum}')
@@ -147,6 +178,4 @@ if __name__ == "__main__":
         mult_string = [line.strip() for line in file.readlines()]
 
     main_part1(mult_string)
-    #test()
-
-    
+    main_part2(mult_string, 25)
