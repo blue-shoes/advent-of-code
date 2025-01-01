@@ -1,37 +1,11 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"os"
 	"slices"
-	"strconv"
-	"strings"
+
+	"github.com/blue-shoes/advent-of-code/utility"
 )
-
-func check(e error) {
-	if e != nil {
-		panic(e)
-	}
-}
-
-func StringArrayToInts(StrArray []string) []int {
-	t := make([]int, len(StrArray))
-	for idx, str := range StrArray {
-		val, err := strconv.Atoi(str)
-		check(err)
-		t[idx] = val
-	}
-	return t
-}
-
-func reduce[T, M any](s []T, f func(M, T) M, initValue M) M {
-	acc := initValue
-	for _, val := range s {
-		acc = f(acc, val)
-	}
-	return acc
-}
 
 func GetSideAreas(dims []int) []int {
 	side1 := dims[0] * dims[1]
@@ -49,43 +23,31 @@ func GetSidePerimeters(dims []int) []int {
 	return []int{side1, side2, side3}
 }
 
-func main_part1(lines []string) {
+func main_part1(lines [][]int) {
 	totalArea := 0
-	for _, present := range lines {
-		dims := StringArrayToInts(strings.Split(present, "x"))
+	for _, dims := range lines {
 		sideAreas := GetSideAreas(dims)
 		minSide := slices.Min(sideAreas)
 
-		neededArea := minSide + 2*(reduce(sideAreas, func(acc int, b int) int { return acc + b }, 0))
+		neededArea := minSide + 2*utility.Sum(sideAreas)
 		totalArea += neededArea
 	}
 	fmt.Printf("Need a total of %d square feet.\n", totalArea)
 }
 
-func main_part2(lines []string) {
+func main_part2(lines [][]int) {
 	totalLength := 0
-	for _, present := range lines {
-		dims := StringArrayToInts(strings.Split(present, "x"))
+	for _, dims := range lines {
 		perims := GetSidePerimeters(dims)
 		minPerim := slices.Min(perims)
-		volume := reduce(dims, func(acc int, b int) int { return acc * b }, 1)
+		volume := utility.Product(dims)
 		totalLength += minPerim + volume
 	}
 	fmt.Printf("Need a total of %d feet of ribbon.\n", totalLength)
 }
 
 func main() {
-	file, err := os.Open("../inputs.txt")
-	check(err)
-	defer file.Close()
-
-	lines := make([]string, 0)
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-
+	lines := utility.ParseIntArrays("../inputs.txt", "x")
 	main_part1(lines)
 	main_part2(lines)
 }
