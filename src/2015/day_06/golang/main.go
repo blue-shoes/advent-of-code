@@ -102,10 +102,10 @@ func main() {
 			action = TOGGLE
 		}
 		r1, _ := regexp.Compile(`(\d+,\d+)`)
-		matches := r1.FindAllStringSubmatch(line, -1)
-		c := utility.StringArrayToInts(strings.Split(matches[0][0], ","))
+		matches := r1.FindAllString(line, -1)
+		c := utility.StringArrayToInts(strings.Split(matches[0], ","))
 		s := utility.Coordinate{Row: c[0], Col: c[1]}
-		c = utility.StringArrayToInts(strings.Split(matches[1][0], ","))
+		c = utility.StringArrayToInts(strings.Split(matches[1], ","))
 		e := utility.Coordinate{Row: c[0], Col: c[1]}
 		actions = append(actions, Action{startCoord: s, endCoord: e, action: action})
 	}
