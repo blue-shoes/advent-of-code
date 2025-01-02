@@ -12,21 +12,36 @@ type Coordinate struct {
 }
 
 type TwoDMap struct {
-	start    Coordinate
-	endCoord Coordinate
-	walls    []Coordinate
+	startCoord, endCoord Coordinate
+	walls                []Coordinate
 }
 
 type ParseRunes struct {
-	startRune rune
-	endRune   rune
-	wallRune  rune
+	startRune, endRune, wallRune rune
 }
 
 func Check(e error) {
 	if e != nil {
 		panic(e)
 	}
+}
+
+type Grid[T any] struct {
+	w, h int
+	data []T
+}
+
+func MakeGrid[T any](w, h int) Grid[T] {
+	return Grid[T]{w, h, make([]T, w*h)}
+}
+func (g Grid[T]) At(c Coordinate) T {
+	return g.data[c.Row*g.h+c.Col]
+}
+func (g Grid[T]) Set(c Coordinate, val T) {
+	g.data[c.Row*g.h+c.Col] = val
+}
+func (g Grid[T]) GetData() []T {
+	return g.data
 }
 
 func ParseTwoDMap(filepath string, parseRunes ParseRunes) *TwoDMap {
