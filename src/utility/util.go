@@ -126,3 +126,27 @@ func RemoveDuplicates[T comparable](sliceList []T) []T {
 	}
 	return list
 }
+
+func GeneratePermutationsRecursive(keys []string) [][]string {
+	if len(keys) == 0 {
+		return [][]string{}
+	}
+	if len(keys) == 1 {
+		return [][]string{{keys[0]}}
+	}
+	permutations := [][]string{}
+
+	for i, key := range keys {
+		remaining := make([]string, len(keys)-1)
+		copy(remaining[:i], keys[:i])
+		copy(remaining[i:], keys[i+1:])
+
+		subpermutations := GeneratePermutationsRecursive(remaining)
+
+		for _, p := range subpermutations {
+			permutations = append(permutations, append([]string{key}, p...))
+		}
+	}
+
+	return permutations
+}
