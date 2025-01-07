@@ -2,10 +2,80 @@ package utility
 
 import (
 	"bufio"
+	"iter"
 	"os"
 	"strconv"
 	"strings"
 )
+
+type base int
+
+const (
+	NW base = iota
+	N
+	NE
+	W
+	E
+	SW
+	S
+	SE
+)
+
+type Move interface {
+	Move() base
+}
+
+func (b base) Move() base {
+	return b
+}
+
+func GetMove(m Move) Coordinate {
+	switch m {
+	case NW:
+		return Coordinate{Row: -1, Col: -1}
+	case N:
+		return Coordinate{Row: -1, Col: 0}
+	case NE:
+		return Coordinate{Row: -1, Col: 1}
+	case W:
+		return Coordinate{Row: 0, Col: -1}
+	case E:
+		return Coordinate{Row: 0, Col: 1}
+	case SW:
+		return Coordinate{Row: 1, Col: -1}
+	case S:
+		return Coordinate{Row: 1, Col: 0}
+	case SE:
+		return Coordinate{Row: 1, Col: 1}
+	default:
+		panic("Unknown Move")
+	}
+}
+
+func (t *TransientGrid[T]) iterateDirections(c Coordinate, moves []Move) iter.Seq[Coordinate] {
+	return func(yield func(Coordinate) bool) {
+		for _, move := range moves {
+			mCoord := GetMove(move)
+			newCoord := Coordinate{Row: c.Row + mCoord.Row, Col: c.Col + mCoord.Col}
+			if newCoord.Col < 0 || newCoord.Col >= t.w || newCoord.Row < 0 || newCoord.Row >= t.h {
+				continue
+			}
+			if !yield(newCoord) {
+				return
+			}
+		}
+	}
+}
+
+func (t *TransientGrid[T]) IterateFourDirections(c Coordinate) iter.Seq[Coordinate] {
+	coords := []Move{N, S, E, W}
+	return t.iterateDirections(c, coords)
+}
+
+func (t *TransientGrid[T]) IterateEightDirections(c Coordinate) iter.Seq[Coordinate] {
+	coords := []Move{N, S, E, W, NW, NE, SW, SE}
+	return t.iterateDirections(c, coords)
+}
 
 type Coordinate struct {
 	Row, Col int
@@ -31,6 +101,41 @@ type Grid[T any] struct {
 	data []T
 }
 
+type TransientGrid[T any] struct {
+	Grid[T]
+	transientData []T
+}
+
+func MakeTransientGrid[T any](grid *Grid[T]) TransientGrid[T] {
+	return TransientGrid[T]{*grid, make([]T, grid.w*grid.h)}
+}
+
+func (t *TransientGrid[T]) At(c Coordinate) T {
+	return t.Grid.At(c)
+}
+
+func (t *TransientGrid[T]) Set(c Coordinate, val T) {
+	t.transientData[c.Row*t.h+c.Col] = val
+}
+
+func (t *TransientGrid[T]) Update() {
+	t.Grid.data = t.transientData
+	t.transientData = nil
+	t.transientData = make([]T, t.Grid.w*t.Grid.h)
+}
+
+func (t *TransientGrid[T]) IterateCoordinates() iter.Seq[Coordinate] {
+	return func(yield func(Coordinate) bool) {
+		for row := range t.Grid.h {
+			for col := range t.Grid.w {
+				if !yield(Coordinate{Row: row, Col: col}) {
+					return
+				}
+			}
+		}
+	}
+}
+
 func MakeGrid[T any](w, h int) Grid[T] {
 	return Grid[T]{w, h, make([]T, w*h)}
 }
@@ -42,6 +147,31 @@ func (g Grid[T]) Set(c Coordinate, val T) {
 }
 func (g Grid[T]) GetData() []T {
 	return g.data
+}
+
+func (g Grid[T]) GetDimensions() Coordinate {
+	return Coordinate{Row: g.h, Col: g.w}
+}
+
+func ParseBinaryTransientGrid(filePath string, trueRune rune) *TransientGrid[bool] {
+	grid := ParseBinaryGrid(filePath, trueRune)
+	tGrid := MakeTransientGrid(grid)
+	return &tGrid
+}
+
+func ParseBinaryGrid(filePath string, trueRune rune) *Grid[bool] {
+	lines := ParseLines(filePath)
+
+	grid := MakeGrid[bool](len(lines[0]), len(lines))
+
+	for row, line := range lines {
+		for column, val := range line {
+			coord := Coordinate{Row: row, Col: column}
+			grid.Set(coord, val == trueRune)
+		}
+	}
+
+	return &grid
 }
 
 func ParseTwoDMap(filepath string, parseRunes ParseRunes) *TwoDMap {
