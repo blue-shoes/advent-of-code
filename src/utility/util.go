@@ -52,12 +52,12 @@ func GetMove(m Move) Coordinate {
 	}
 }
 
-func (t *TransientGrid[T]) iterateDirections(c Coordinate, moves []Move) iter.Seq[Coordinate] {
+func (g *Grid[T]) iterateDirections(c Coordinate, moves []Move) iter.Seq[Coordinate] {
 	return func(yield func(Coordinate) bool) {
 		for _, move := range moves {
 			mCoord := GetMove(move)
 			newCoord := Coordinate{Row: c.Row + mCoord.Row, Col: c.Col + mCoord.Col}
-			if newCoord.Col < 0 || newCoord.Col >= t.w || newCoord.Row < 0 || newCoord.Row >= t.h {
+			if newCoord.Col < 0 || newCoord.Col >= g.w || newCoord.Row < 0 || newCoord.Row >= g.h {
 				continue
 			}
 			if !yield(newCoord) {
@@ -67,14 +67,22 @@ func (t *TransientGrid[T]) iterateDirections(c Coordinate, moves []Move) iter.Se
 	}
 }
 
-func (t *TransientGrid[T]) IterateFourDirections(c Coordinate) iter.Seq[Coordinate] {
+func (g *Grid[T]) IterateFourDirections(c Coordinate) iter.Seq[Coordinate] {
 	coords := []Move{N, S, E, W}
-	return t.iterateDirections(c, coords)
+	return g.iterateDirections(c, coords)
+}
+
+func (t *TransientGrid[T]) IterateFourDirections(c Coordinate) iter.Seq[Coordinate] {
+	return t.Grid.IterateFourDirections(c)
+}
+
+func (g *Grid[T]) IterateEightDirections(c Coordinate) iter.Seq[Coordinate] {
+	coords := []Move{N, S, E, W, NW, NE, SW, SE}
+	return g.iterateDirections(c, coords)
 }
 
 func (t *TransientGrid[T]) IterateEightDirections(c Coordinate) iter.Seq[Coordinate] {
-	coords := []Move{N, S, E, W, NW, NE, SW, SE}
-	return t.iterateDirections(c, coords)
+	return t.Grid.IterateEightDirections(c)
 }
 
 type Coordinate struct {
@@ -124,16 +132,20 @@ func (t *TransientGrid[T]) Update() {
 	t.transientData = make([]T, t.Grid.w*t.Grid.h)
 }
 
-func (t *TransientGrid[T]) IterateCoordinates() iter.Seq[Coordinate] {
+func (g *Grid[T]) IterateCoordinates() iter.Seq[Coordinate] {
 	return func(yield func(Coordinate) bool) {
-		for row := range t.Grid.h {
-			for col := range t.Grid.w {
+		for row := range g.h {
+			for col := range g.w {
 				if !yield(Coordinate{Row: row, Col: col}) {
 					return
 				}
 			}
 		}
 	}
+}
+
+func (t *TransientGrid[T]) IterateCoordinates() iter.Seq[Coordinate] {
+	return t.Grid.IterateCoordinates()
 }
 
 func MakeGrid[T any](w, h int) Grid[T] {
