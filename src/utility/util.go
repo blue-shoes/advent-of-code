@@ -234,7 +234,7 @@ func ParseLines(filePath string) []string {
 func StringArrayToInts(StrArray []string) []int {
 	t := make([]int, len(StrArray))
 	for idx, str := range StrArray {
-		val, err := strconv.Atoi(str)
+		val, err := strconv.Atoi(strings.TrimSpace(str))
 		Check(err)
 		t[idx] = val
 	}
@@ -291,4 +291,9 @@ func GeneratePermutationsRecursive(keys []string) [][]string {
 	}
 
 	return permutations
+}
+
+func Atoi(s string) int {
+	val, _ := strconv.Atoi(strings.TrimSpace(s))
+	return val
 }
