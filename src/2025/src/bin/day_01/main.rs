@@ -4,7 +4,7 @@ fn main() {
 
     let dial_start = 50;
 
-    let filepath = "input.txt";
+    let filepath = "inputs/day_01/input.txt";
 
     let dial = dial_start;
 
