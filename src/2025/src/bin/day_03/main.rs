@@ -15,7 +15,45 @@ fn main() {
     let sum: u64 = part_two(&seq);
 
     println!("The maximum output override joltage is {sum}");
+
+    let sum: u64 = part_two_method_two(&seq);
+    println!("The maximum output override joltage (method 2) is {sum}");
+
     
+}
+
+fn part_two_method_two(seq: &Vec<&str>) -> u64 {
+    let mut sum: u64 = 0;
+
+    let pow_10: [f64; 12] = [1e11f64, 1e10f64, 1e9f64, 1e8f64, 1e7f64, 1e6f64, 1e5f64, 1e4f64, 1e3f64, 1e2f64, 1e1f64, 1e0f64];
+
+    for line in seq {
+        let mut voltage: [u64; 12] = [0; 12];
+
+        let vals: std::str::Chars<'_> = line.chars();
+        let vals: Vec<u64> = vals.into_iter()
+            .map(|a|a.to_digit(10).expect("Converted to digit").into())
+            .collect();
+
+        let mut start_idx = 0;
+        for i in 0..12 {
+            let last_digit = line.len() - (11-i);
+            let sub_vector = &vals[start_idx..last_digit];
+            let digit = sub_vector.iter().max().expect("Got max");
+            voltage[i] = *digit;
+            start_idx = sub_vector.iter().position(|v| v==digit).expect("Got index")+1+start_idx;
+        }
+
+        let volt: u64 = voltage.iter()
+            .zip(pow_10.iter())
+            .map(|(a, b)|a*(b.round() as u64))
+            .sum();
+
+        sum += volt;
+
+    }
+
+    sum
 }
 
 fn part_one(seq: &Vec<&str>) -> u64 {
